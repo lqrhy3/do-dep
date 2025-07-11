@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Telegram Casino Game</title>
+</head>
+<body style="text-align: center; font-family: sans-serif;">
+  <h1 id="greeting">Loading...</h1>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const username = params.get('username') || 'Guest';
+    document.getElementById('greeting').innerText = `HELLO, ${username.toUpperCase()}`;
+  </script>
+</body>
+</html>
