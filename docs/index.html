@@ -2,50 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Telegram Casino Game</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
       margin: 0;
-      font-family: sans-serif;
-      background-color: #111;
-      color: #eee;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--tg-theme-bg-color, #111);
+      color: var(--tg-theme-text-color, #eee);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      overflow: hidden;
     }
     canvas {
-      display: none; /* скрыт, но нужен для requestAnimationFrame */
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+    #greeting {
+      position: relative;
+      z-index: 2;
+      font-size: 2rem;
+      font-weight: bold;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
     }
   </style>
 </head>
 <body>
   <h1 id="greeting">Loading...</h1>
-  <canvas id="fake-canvas" width="1" height="1"></canvas>
+  <canvas id="game-canvas" width="400" height="600"></canvas>
 
   <script>
-    // Инициализация Telegram WebApp API
+    // Initialize Telegram WebApp API
     const tg = window.Telegram.WebApp;
+    
+    // Tell Telegram the WebApp is ready
     tg.ready();
+    
+    // Expand the WebApp to full height
     tg.expand();
-
-    // Приветствие пользователя
+    
+    // Set the header color to match the theme
+    tg.setHeaderColor('secondary_bg_color');
+    
+    // Get user info from URL parameters
     const params = new URLSearchParams(window.location.search);
     const username = params.get('username') || 'Guest';
-    document.getElementById('greeting').innerText = `HELLO, ${username.toUpperCase()}`;
-
-    // "Обман Telegram", чтобы не висело на Loading
-    const canvas = document.getElementById('fake-canvas');
+    const uid = params.get('uid') || 'Unknown';
+    
+    // Update greeting
+    document.getElementById('greeting').innerText = `HELLO, ${username.toUpperCase()}!`;
+    
+    // Set up canvas for the game
+    const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
-
-    function fakeDrawLoop() {
-      ctx.clearRect(0, 0, 1, 1); // холст обновляется
-      requestAnimationFrame(fakeDrawLoop); // обязательный вызов
+    
+    // Set canvas size to match display
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     }
-
-    requestAnimationFrame(fakeDrawLoop);
+    
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    // Simple animation loop to keep the game active
+    function gameLoop() {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw a simple background
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Continue the loop
+      requestAnimationFrame(gameLoop);
+    }
+    
+    // Start the game loop
+    gameLoop();
+    
+    // Log for debugging
+    console.log('Telegram WebApp initialized');
+    console.log('User:', username, 'UID:', uid);
   </script>
 </body>
 </html>
