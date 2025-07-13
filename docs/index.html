@@ -5,36 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Telegram Casino Slot</title>
   <style>
-    body {
-      background: #222;
-      color: #fff;
-      font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .slot-machine {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 30px;
-      font-size: 4rem;
-    }
-    button {
-      padding: 10px 30px;
-      font-size: 1.5rem;
-      border: none;
-      border-radius: 8px;
-      background: #ff9800;
-      color: #fff;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:active {
-      background: #e65100;
-    }
+    body { background: #222; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+    .slot-machine { display: flex; gap: 20px; margin-bottom: 30px; font-size: 4rem; }
+    button { padding: 10px 30px; font-size: 1.5rem; border: none; border-radius: 8px; background: #ff9800; color: #fff; cursor: pointer; transition: background 0.2s; }
+    button:active { background: #e65100; }
+    .stats { margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -46,42 +21,100 @@
   </div>
   <button id="spin-btn">Spin</button>
   <h2 id="result"></h2>
+  <div class="stats">
+    <div>Points: <span id="points">-</span></div>
+    <div>Spins: <span id="spins">-</span></div>
+    <div>Jackpots: <span id="jackpots">-</span></div>
+  </div>
 
   <script>
-    const symbols = ["🍒", "🍋", "🍉", "🍇", "🍊", "7️⃣", "⭐"];
+    // Получаем параметры из URL
+    function getParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+    const telegram_id = getParam('uid');
+    const username = getParam('username') || 'Guest';
+
+    const pointsEl = document.getElementById('points');
+    const spinsEl = document.getElementById('spins');
+    const jackpotsEl = document.getElementById('jackpots');
     const slots = document.querySelectorAll("#slots span");
     const result = document.getElementById("result");
     const spinBtn = document.getElementById("spin-btn");
 
-    function getRandomSymbol() {
-      return symbols[Math.floor(Math.random() * symbols.length)];
+    let user = null;
+
+    async function loadUser() {
+      if (!telegram_id) {
+        result.textContent = "No telegram_id!";
+        spinBtn.disabled = true;
+        return;
+      }
+      const res = await fetch(`/api/user/${telegram_id}?username=${encodeURIComponent(username)}`);
+      user = await res.json();
+      updateStats();
     }
 
-    function spinSlots() {
+    function updateStats() {
+      pointsEl.textContent = user.points;
+      spinsEl.textContent = user.spins;
+      jackpotsEl.textContent = user.jackpots;
+    }
+
+    async function spinSlots() {
+      if (!user || user.points < 100) {
+        result.textContent = "Not enough points!";
+        return;
+      }
       result.textContent = "";
-      let spins = 20; // how many times to change symbols (for animation)
+      spinBtn.disabled = true;
+
+      // Анимация
+      let spins = 20;
       let interval = setInterval(() => {
-        slots.forEach(slot => slot.textContent = getRandomSymbol());
+        slots.forEach(slot => slot.textContent = randomSymbol());
         spins--;
         if (spins === 0) {
           clearInterval(interval);
-          checkWin();
         }
       }, 70);
+
+      // Запрос к API
+      const apiRes = await fetch('/api/spin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telegram_id })
+      });
+      const spinResult = await apiRes.json();
+
+      setTimeout(() => {
+        // Показываем результат
+        slots.forEach((slot, i) => slot.textContent = spinResult.result[i]);
+        user.points = spinResult.points;
+        user.spins = spinResult.spins;
+        user.jackpots = spinResult.jackpots;
+        updateStats();
+        if (spinResult.jackpot) {
+          result.textContent = "🎉 JACKPOT! 🎉";
+        } else if (spinResult.result[0] === spinResult.result[1] || spinResult.result[1] === spinResult.result[2] || spinResult.result[0] === spinResult.result[2]) {
+          result.textContent = "👍 Nice, two match!";
+        } else if (spinResult.error) {
+          result.textContent = spinResult.error;
+        } else {
+          result.textContent = "😢 Try again!";
+        }
+        spinBtn.disabled = false;
+      }, 70 * 20 + 100);
     }
 
-    function checkWin() {
-      const [a, b, c] = Array.from(slots).map(slot => slot.textContent);
-      if (a === b && b === c) {
-        result.textContent = "🎉 JACKPOT! 🎉";
-      } else if (a === b || b === c || a === c) {
-        result.textContent = "👍 Nice, two match!";
-      } else {
-        result.textContent = "😢 Try again!";
-      }
+    function randomSymbol() {
+      const symbols = ["🍒", "🍋", "🍉", "🍇", "🍊", "7️⃣", "⭐"];
+      return symbols[Math.floor(Math.random() * symbols.length)];
     }
 
     spinBtn.addEventListener("click", spinSlots);
+
+    loadUser();
   </script>
 </body>
 </html>
