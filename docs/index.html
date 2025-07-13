@@ -28,6 +28,9 @@
   </div>
 
   <script>
+    // Базовый адрес API через ngrok
+    const API_BASE = "https://5d3a3fb0adae.ngrok-free.app";
+
     // Получаем параметры из URL
     function getParam(name) {
       return new URLSearchParams(window.location.search).get(name);
@@ -50,7 +53,7 @@
         spinBtn.disabled = true;
         return;
       }
-      const res = await fetch(`/api/user/${telegram_id}?username=${encodeURIComponent(username)}`);
+      const res = await fetch(`${API_BASE}/api/user/${telegram_id}?username=${encodeURIComponent(username)}`);
       user = await res.json();
       updateStats();
     }
@@ -80,7 +83,7 @@
       }, 70);
 
       // Запрос к API
-      const apiRes = await fetch('/api/spin', {
+      const apiRes = await fetch(`${API_BASE}/api/spin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ telegram_id })
