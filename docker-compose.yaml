@@ -1,0 +1,54 @@
+services:
+  backend:
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/healthcheck" ]
+      interval: 100s
+      timeout: 5s
+      retries: 5
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8500:8000"
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8580:8080"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - ./db_data:/var/lib/postgresql/data/pgdata
+    env_file: .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+
+volumes:
+  db_data:

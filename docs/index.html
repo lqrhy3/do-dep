@@ -1,123 +1,262 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Telegram Casino Slot</title>
-  <style>
-    body { background: #222; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-    .slot-machine { display: flex; gap: 20px; margin-bottom: 30px; font-size: 4rem; }
-    button { padding: 10px 30px; font-size: 1.5rem; border: none; border-radius: 8px; background: #ff9800; color: #fff; cursor: pointer; transition: background 0.2s; }
-    button:active { background: #e65100; }
-    .stats { margin-top: 20px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telegram Casino – Arcade Edition</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bungee+Shade&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --accent:#00eaff;
+  --bg:#18181b;
+  --reelW:90px;
+  --reelH:90px;
+}
+
+/* ---------- GLOBAL & BACKGROUND ---------- */
+/* ---------- GLOBAL & BACKGROUND ---------- */
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--bg);
+  color:#fff;
+  font-family:'Orbitron',sans-serif;
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  position:relative;          /* anchors the pseudo-elements */
+}
+
+/* warm, drifting radial glow */
+body::before{
+  content:"";
+  position:absolute;
+  inset:-50%;
+  background:radial-gradient(circle at var(--x,50%) var(--y,50%),
+                              #46200055 0%,
+                              transparent 60%);
+  animation:moveGlow 10s linear infinite;
+  z-index:-2;
+  pointer-events:none;
+}
+@keyframes moveGlow{
+  to{--x:150%;--y:150%;}
+}
+
+/* SVG sparkle grid that pans diagonally */
+body::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:url('data:image/svg+xml;utf8,\
+<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22 fill=%22white%22 opacity=%220.1%22>\
+<circle cx=%223%22 cy=%223%22 r=%223%22/>\
+<circle cx=%2280%22 cy=%2280%22 r=%222%22/>\
+<circle cx=%2260%22 cy=%2230%22 r=%224%22/>\
+</svg>');
+  background-size:100px 100px;
+  animation:stars 60s linear infinite;
+  z-index:-2;
+  pointer-events:none;
+}
+@keyframes stars{
+  to{background-position:1000px 500px;}
+}
+
+/* ---------- CARD ---------- */
+.card{
+  position:relative;          /* for confetti canvas */
+  background:#222;border:3px solid var(--accent);border-radius:16px;
+  box-shadow:0 0 14px var(--accent),0 0 28px 6px var(--accent);
+  padding:40px;width:460px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;
+}
+
+/* ---------- TITLE ---------- */
+h1{
+  font-family:'Bungee Shade',cursive;font-size:2.6rem;
+  margin-bottom:28px;text-shadow:0 0 8px var(--accent);
+}
+
+/* ---------- REELS ---------- */
+.slot-wrapper{display:flex;gap:16px;margin:28px 0;}
+.reel{
+  width:var(--reelW);height:var(--reelH);border:3px solid var(--accent);
+  border-radius:10px;background:#000;overflow:hidden;position:relative;
+  box-shadow:inset 0 0 18px #000;
+}
+/* inner strip we’ll translate */
+.strip{
+  position:absolute;left:0;top:0;width:100%;
+  transition:transform 1s cubic-bezier(.25,.6,.2,1);   /* overridden per spin */
+}
+.symbol{
+  width:100%;height:var(--reelH);display:flex;
+  align-items:center;justify-content:center;font-size:48px;
+}
+
+/* ---------- BUTTON ---------- */
+button{
+  font-family:'Orbitron',sans-serif;font-size:1.35rem;
+  padding:14px 42px;border:none;border-radius:50px;
+  cursor:pointer;background:var(--accent);color:#111;font-weight:700;
+  box-shadow:0 0 14px var(--accent),0 0 28px 6px var(--accent);
+  transition:transform .15s,box-shadow .4s ease-in-out;
+  animation:pulse 3s ease-in-out infinite;
+}
+button:hover{transform:translateY(-4px);}
+button:active{transform:translateY(2px);}
+button:disabled{opacity:.35;cursor:not-allowed;animation:none;box-shadow:none;}
+@keyframes pulse{50%{box-shadow:0 0 6px var(--accent),0 0 12px 3px var(--accent);}}
+
+/* ---------- INFO ---------- */
+#result{min-height:1.9rem;margin:16px 0;font-size:1.45rem;text-shadow:0 0 6px var(--accent);}
+.stats{display:flex;gap:22px;margin-top:auto;font-size:.9rem;}
+.stats div{flex:1;}
+
+/* ---------- CONFETTI CANVAS ---------- */
+canvas#cfx{position:absolute;inset:0;pointer-events:none;z-index:-1;}
+</style>
 </head>
 <body>
-  <h1>🎰 Telegram Casino</h1>
-  <div class="slot-machine" id="slots">
-    <span>🍒</span>
-    <span>🍋</span>
-    <span>🍉</span>
+  <div class="card" id="card">
+    <h1>🎰 YOP CASINO</h1>
+
+    <div class="slot-wrapper">
+      <div class="reel"><div class="strip" id="s0"></div></div>
+      <div class="reel"><div class="strip" id="s1"></div></div>
+      <div class="reel"><div class="strip" id="s2"></div></div>
+    </div>
+
+    <button id="spin-btn">SPIN</button>
+    <div id="result"></div>
+
+    <div class="stats">
+      <div>Points: <span id="points">-</span></div>
+      <div>Spins: <span id="spins">-</span></div>
+      <div>Jackpots: <span id="jackpots">-</span></div>
+    </div>
+
+    <canvas id="cfx"></canvas>
   </div>
-  <button id="spin-btn">Spin</button>
-  <h2 id="result"></h2>
-  <div class="stats">
-    <div>Points: <span id="points">-</span></div>
-    <div>Spins: <span id="spins">-</span></div>
-    <div>Jackpots: <span id="jackpots">-</span></div>
-  </div>
 
-  <script>
-    // Базовый адрес API через ngrok
-    const API_BASE = "https://5d3a3fb0adae.ngrok-free.app";
+<!-- ---------- SCRIPTS ---------- -->
+<script>
+/* ---------- SYMBOL SET ---------- */
+const SYMBOLS = ["🍒","🍋","🍉","🍇","🍊","7️⃣","⭐"];
 
-    // Получаем параметры из URL
-    function getParam(name) {
-      return new URLSearchParams(window.location.search).get(name);
+/* ---------- BUILD STRIPS ---------- */
+const DUPLICATES = 10;                // keep plenty in reserve
+const strips = [0,1,2].map(i=>document.getElementById("s"+i));
+strips.forEach(strip=>{
+  for(let k=0;k<DUPLICATES;k++){
+    SYMBOLS.forEach(sym=>{
+      const d=document.createElement("div");
+      d.className="symbol";
+      d.textContent=sym;
+      strip.appendChild(d);
+    });
+  }
+});
+
+/* ---------- GAME STATE ---------- */
+let points=1000,spins=0,jackpots=0;
+
+/* ---------- AUDIO ---------- */
+const coin=new Audio("https://cdn.jsdelivr.net/gh/terkelg/awesome-uses/audio/coin.mp3");
+
+/* ---------- DOM REFS ---------- */
+const spinBtn=document.getElementById("spin-btn");
+const resultEl=document.getElementById("result");
+const [pEl,sEl,jEl]=["points","spins","jackpots"].map(id=>document.getElementById(id));
+
+function updateStats(){pEl.textContent=points;sEl.textContent=spins;jEl.textContent=jackpots;}
+
+/* ---------- CONFETTI ---------- */
+const ctx=document.getElementById("cfx").getContext("2d");
+let confetti=[];
+function launchConfetti(){
+  confetti.length=0;
+  for(let i=0;i<160;i++){
+    confetti.push({
+      x:Math.random()*ctx.canvas.width,
+      y:-20-Math.random()*200,
+      w:6,h:12,
+      vy:2+Math.random()*4,
+      vx:-2+Math.random()*4,
+      r:Math.random()*360,
+      vr:-6+Math.random()*12
+    });
+  }
+}
+function drawCfx(){
+  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+  confetti.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r*Math.PI/180);
+    ctx.fillStyle=`hsl(${p.r%360},100%,60%)`;
+    ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
+  });
+  requestAnimationFrame(drawCfx);
+}
+ctx.canvas.width=460;ctx.canvas.height=420;drawCfx();
+
+/* ---------- SPIN ---------- */
+function spin(){
+  if(spinBtn.disabled) return;
+  if(points<100){resultEl.textContent="Not enough points!";return;}
+
+  points-=100; spins+=1; updateStats();
+  resultEl.textContent="";
+
+  spinBtn.disabled=true;
+  coin.currentTime=0; coin.play();
+
+  const outcomes=[];
+  strips.forEach((strip,i)=>{
+    const rounds=3+Math.floor(Math.random()*2);          // 3-4 full turns
+    const target=Math.floor(Math.random()*SYMBOLS.length);
+    outcomes.push(target);
+    const symbolH= parseInt(getComputedStyle(document.documentElement).getPropertyValue('--reelH'));
+    const shift=-( (rounds*SYMBOLS.length+target)*symbolH );
+    strip.style.transition=`transform ${1+i*0.15}s cubic-bezier(.22,.65,.2,1)`;
+    strip.style.transform=`translateY(${shift}px)`;
+  });
+
+  /* settle */
+  const settleTime=1400;
+  setTimeout(()=>{
+    const finalSyms=outcomes.map(idx=>SYMBOLS[idx]);
+    /* normalize transforms so strip length stays bounded */
+    strips.forEach((strip,i)=>{
+      const symbolH=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--reelH'));
+      strip.style.transition="none";
+      strip.style.transform=`translateY(${-(outcomes[i]*symbolH)}px)`;
+    });
+
+    /* result logic */
+    if(finalSyms.every(s=>s===finalSyms[0])){
+      resultEl.textContent="🎉 JACKPOT!";
+      points+=1000;jackpots+=1;updateStats();launchConfetti();
+    }else if(new Set(finalSyms).size===2){
+      resultEl.textContent="✨ Two match!";
+      points+=200;updateStats();
+    }else{
+      resultEl.textContent="Try again…";
     }
-    const telegram_id = getParam('uid');
-    const username = getParam('username') || 'Guest';
 
-    const pointsEl = document.getElementById('points');
-    const spinsEl = document.getElementById('spins');
-    const jackpotsEl = document.getElementById('jackpots');
-    const slots = document.querySelectorAll("#slots span");
-    const result = document.getElementById("result");
-    const spinBtn = document.getElementById("spin-btn");
+    spinBtn.disabled=false;
+  },settleTime);
+}
 
-    let user = null;
-
-    async function loadUser() {
-      if (!telegram_id) {
-        result.textContent = "No telegram_id!";
-        spinBtn.disabled = true;
-        return;
-      }
-      const res = await fetch(`${API_BASE}/api/user/${telegram_id}?username=${encodeURIComponent(username)}`);
-      user = await res.json();
-      updateStats();
-    }
-
-    function updateStats() {
-      pointsEl.textContent = user.points;
-      spinsEl.textContent = user.spins;
-      jackpotsEl.textContent = user.jackpots;
-    }
-
-    async function spinSlots() {
-      if (!user || user.points < 100) {
-        result.textContent = "Not enough points!";
-        return;
-      }
-      result.textContent = "";
-      spinBtn.disabled = true;
-
-      // Анимация
-      let spins = 20;
-      let interval = setInterval(() => {
-        slots.forEach(slot => slot.textContent = randomSymbol());
-        spins--;
-        if (spins === 0) {
-          clearInterval(interval);
-        }
-      }, 70);
-
-      // Запрос к API
-      const apiRes = await fetch(`${API_BASE}/api/spin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ telegram_id })
-      });
-      const spinResult = await apiRes.json();
-
-      setTimeout(() => {
-        // Показываем результат
-        slots.forEach((slot, i) => slot.textContent = spinResult.result[i]);
-        user.points = spinResult.points;
-        user.spins = spinResult.spins;
-        user.jackpots = spinResult.jackpots;
-        updateStats();
-        if (spinResult.jackpot) {
-          result.textContent = "🎉 JACKPOT! 🎉";
-        } else if (spinResult.result[0] === spinResult.result[1] || spinResult.result[1] === spinResult.result[2] || spinResult.result[0] === spinResult.result[2]) {
-          result.textContent = "👍 Nice, two match!";
-        } else if (spinResult.error) {
-          result.textContent = spinResult.error;
-        } else {
-          result.textContent = "😢 Try again!";
-        }
-        spinBtn.disabled = false;
-      }, 70 * 20 + 100);
-    }
-
-    function randomSymbol() {
-      const symbols = ["🍒", "🍋", "🍉", "🍇", "🍊", "7️⃣", "⭐"];
-      return symbols[Math.floor(Math.random() * symbols.length)];
-    }
-
-    spinBtn.addEventListener("click", spinSlots);
-
-    loadUser();
-  </script>
+/* ---------- BOOT ---------- */
+updateStats();
+spinBtn.addEventListener("click",spin);
+</script>
 </body>
 </html>

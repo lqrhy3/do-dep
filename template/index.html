@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DoDep Casino — demo</title>
+  <style>
+    :root{
+      --bg1:#0e0f1a; --bg2:#15172b;
+      --accent:#7c4dff; --accent2:#00e5ff; --win:#27e98c; --lose:#ff5171;
+      --text:#f6f7fb; --muted:#9aa0b4; --glass:rgba(255,255,255,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Inter", Arial;
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 80% 10%, #1d1e37 0%, transparent 60%),
+                  radial-gradient(900px 600px at 10% 90%, #0b2a3a 0%, transparent 60%),
+                  linear-gradient(180deg, var(--bg1), var(--bg2));
+      min-height:100svh; display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .wrap{ width:min(100%, 980px); }
+    header{
+      display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px;
+    }
+    .brand{
+      font-weight:800; letter-spacing:.3px; font-size:20px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; background-clip:text; color:transparent;
+    }
+    .card{
+      position:relative;
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:20px; padding:24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter: blur(6px);
+      display:grid; grid-template-columns: 1fr 360px; gap:24px;
+    }
+    @media (max-width:900px){ .card{ grid-template-columns: 1fr; } }
+
+    /* Left: stage */
+    .stage{
+      display:grid; place-items:center; padding:16px; border-radius:16px;
+      background: radial-gradient(500px 240px at 50% 110%, rgba(124,77,255,.25), transparent 60%);
+      min-height:420px; position:relative; overflow:hidden;
+    }
+
+    /* Coin */
+    .coin-scene{
+      perspective: 1200px;
+    }
+    .coin{
+      width:180px; height:180px; position:relative; transform-style: preserve-3d;
+      transition: transform 1.2s cubic-bezier(.2,.7,.2,1);
+      filter: drop-shadow(0 24px 32px rgba(0,0,0,.5));
+    }
+    .coin .face{
+      position:absolute; inset:0; border-radius:50%;
+      display:grid; place-items:center; font-weight:900; font-size:44px; letter-spacing:.06em;
+      backface-visibility: hidden;
+      background:
+        radial-gradient(80% 80% at 50% 30%, rgba(255,255,255,.4), rgba(255,255,255,.05) 50%, transparent 60%),
+        conic-gradient(from 0deg, #f5d26a, #b4882f, #f1cd64, #9e7729, #f5d26a);
+      border:2px solid rgba(255,255,255,.35);
+      position:absolute;
+    }
+    .coin .face::after{
+      content:""; position:absolute; inset:10px; border-radius:50%;
+      border:2px dashed rgba(0,0,0,.18);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
+    }
+    .face.heads{ transform: rotateY(0deg); }
+    .face.tails{ transform: rotateY(180deg); }
+    .coin.flipping{ animation: flip 1.25s cubic-bezier(.2,.7,.2,1) 1; }
+    @keyframes flip{
+      0%{ transform: rotateY(0deg) translateZ(0) rotateX(0); }
+      20%{ transform: rotateY(360deg) translateZ(6px) rotateX(10deg);}
+      60%{ transform: rotateY(1440deg) translateZ(0) rotateX(0deg);}
+      100%{ transform: rotateY(var(--final-rot, 0deg)); }
+    }
+    .result{
+      position:absolute; bottom:16px; left:16px; right:16px; display:flex; justify-content:center;
+      font-weight:700; color:var(--muted);
+    }
+    .result.win{ color:var(--win); text-shadow:0 0 22px rgba(39,233,140,.35); }
+    .result.lose{ color:var(--lose); text-shadow:0 0 22px rgba(255,81,113,.25); }
+
+    /* Right: controls */
+    .panel{ display:flex; flex-direction:column; gap:16px; }
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .balance{
+      display:flex; gap:12px; align-items:center;
+      background: var(--glass); border:1px solid rgba(255,255,255,.12);
+      border-radius:12px; padding:12px 14px; font-weight:700;
+    }
+    .muted{ color:var(--muted); font-weight:600; }
+    .bet{
+      display:flex; gap:10px; align-items:center;
+      background: var(--glass); border:1px solid rgba(255,255,255,.12);
+      border-radius:12px; padding:10px;
+    }
+    .bet input{
+      width:100%; background:transparent; border:none; outline:none; color:var(--text);
+      font-weight:800; font-size:18px; padding:8px 10px; text-align:right;
+      -moz-appearance: textfield;
+    }
+    .bet input::-webkit-outer-spin-button,
+    .bet input::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+    .btn, button{
+      appearance:none; border:none; cursor:pointer;
+      background:linear-gradient(90deg, var(--accent), var(--accent2));
+      color:#101222; font-weight:900; letter-spacing:.05em;
+      padding:14px 18px; border-radius:12px; box-shadow:0 10px 30px rgba(124,77,255,.35);
+      transition:transform .08s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(1px) scale(.99); }
+    .btn.secondary{
+      background: transparent; color:var(--text);
+      border:1px solid rgba(255,255,255,.16); box-shadow:none;
+    }
+    .grid-buttons{ display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
+    .flip{ font-size:20px; padding:18px; border-radius:14px; }
+    .disabled, .btn:disabled{ opacity:.6; cursor:not-allowed; filter:grayscale(.2); }
+    .toast{ min-height:22px; color:var(--muted); font-weight:600; }
+    .toast.error{ color:var(--lose); }
+    .tiny{ font-size:12px; color:var(--muted); }
+
+    /* Confetti canvas */
+    #confetti{ position:absolute; inset:0; pointer-events:none; }
+
+    /* Modal */
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.5);
+      display:none; place-items:center; z-index:1000;
+    }
+    .modal{ width:min(92vw, 480px); background:#15172b; border:1px solid rgba(255,255,255,.12);
+      border-radius:16px; padding:18px; }
+    .modal h3{ margin:0 0 10px; }
+    .modal .form{ display:flex; flex-direction:column; gap:10px; }
+    .input{
+      display:flex; align-items:center; gap:10px; background: var(--glass); border:1px solid rgba(255,255,255,.12);
+      border-radius:10px; padding:10px;
+    }
+    .input input{ width:100%; background:transparent; border:none; outline:none; color:var(--text); font-weight:700; }
+    .modal .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:6px; }
+    .link{ background:none; border:none; color:var(--muted); text-decoration:underline; cursor:pointer; padding:0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">FLIP CASINO — demo</div>
+      <div class="row">
+        <div id="hdr-user" class="muted tiny"></div>
+        <button class="btn secondary" id="changeUserBtn">Сменить пользователя</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="stage">
+        <canvas id="confetti"></canvas>
+        <div class="coin-scene">
+          <div id="coin" class="coin" aria-live="polite" style="--final-rot:0deg">
+            <div class="face heads">WIN</div>
+            <div class="face tails">TRY</div>
+          </div>
+        </div>
+        <div id="result" class="result">Нажми FLIP, чтобы подбросить</div>
+      </div>
+
+      <div class="panel">
+        <div class="balance row">
+          <span class="muted">Баланс</span>
+          <span id="balance" style="font-size:20px">—</span>
+        </div>
+
+        <div class="bet">
+          <span class="muted">Ставка</span>
+          <input id="bet" type="number" min="1" step="1" value="10" />
+        </div>
+
+        <div class="grid-buttons">
+          <button class="btn secondary" id="betMin">Min</button>
+          <button class="btn secondary" id="bet10">+10</button>
+          <button class="btn secondary" id="betHalf">½</button>
+          <button class="btn secondary" id="betMax">Max</button>
+        </div>
+
+        <button id="flipBtn" class="btn flip">FLIP</button>
+        <div id="toast" class="toast"></div>
+        <div class="tiny">Правила: шанс 50% на «секретный» джекпот. Если повезёт — залетает <code>jackpot_multiplier</code> (см. settings), иначе проигрыш. Баланс обновляется после каждого броска.</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Login modal -->
+  <div id="loginModal" class="modal-backdrop">
+    <div class="modal">
+      <h3>Кто ты в Telegram?</h3>
+      <div class="form">
+        <label class="input">
+          <span class="muted">Telegram ID (число)</span>
+          <input id="inpTgId" type="number" inputmode="numeric" placeholder="например, 123456789" />
+        </label>
+        <label class="input">
+          <span class="muted">Username (необязательно)</span>
+          <input id="inpUsername" type="text" placeholder="@nickname" />
+        </label>
+        <div class="actions">
+          <button id="loginBtn" class="btn">Войти</button>
+          <button id="cancelLogin" class="link">Отмена</button>
+        </div>
+        <div id="loginErr" class="toast error"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==== CONFIG ==== */
+    // Если фронт и бэк на одном домене/порте — оставь как есть.
+    // Иначе укажи полный адрес, например: 'http://localhost:8000/api/v1'
+    const API_BASE = 'http://localhost:8500/api/v1';
+
+    /* ==== STATE ==== */
+    const state = {
+      userId: null,
+      tgId: null,
+      username: null,
+      balance: 0,
+      spinning: false,
+    };
+
+    /* ==== UI ELEMENTS ==== */
+    const el = {
+      coin: document.getElementById('coin'),
+      result: document.getElementById('result'),
+      balance: document.getElementById('balance'),
+      bet: document.getElementById('bet'),
+      flipBtn: document.getElementById('flipBtn'),
+      toast: document.getElementById('toast'),
+      betMin: document.getElementById('betMin'),
+      bet10: document.getElementById('bet10'),
+      betHalf: document.getElementById('betHalf'),
+      betMax: document.getElementById('betMax'),
+      confetti: document.getElementById('confetti'),
+      // modal
+      loginModal: document.getElementById('loginModal'),
+      inpTgId: document.getElementById('inpTgId'),
+      inpUsername: document.getElementById('inpUsername'),
+      loginBtn: document.getElementById('loginBtn'),
+      cancelLogin: document.getElementById('cancelLogin'),
+      loginErr: document.getElementById('loginErr'),
+      hdrUser: document.getElementById('hdr-user'),
+      changeUserBtn: document.getElementById('changeUserBtn'),
+    };
+
+    /* ==== CONFETTI (микро-имплементация) ==== */
+    const ctx = el.confetti.getContext('2d');
+    let confettiParts = [];
+    function resizeCanvas(){
+      el.confetti.width = el.confetti.parentElement.clientWidth;
+      el.confetti.height = el.confetti.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+    function launchConfetti(){
+      const w = el.confetti.width, h = el.confetti.height;
+      confettiParts = Array.from({length: 160}, () => ({
+        x: Math.random()*w, y: -10 - Math.random()*40,
+        r: 2 + Math.random()*4,
+        c: `hsl(${360*Math.random()}, 90%, 60%)`,
+        vx: -2 + Math.random()*4,
+        vy: 2 + Math.random()*3,
+        a: Math.random()*Math.PI
+      }));
+      (function tick(){
+        ctx.clearRect(0,0,w,h);
+        confettiParts.forEach(p=>{
+          p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.a += 0.1;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.a);
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
+          ctx.restore();
+        });
+        confettiParts = confettiParts.filter(p => p.y < h+20);
+        if(confettiParts.length) requestAnimationFrame(tick);
+      })();
+    }
+
+    /* ==== HELPERS ==== */
+    function setToast(msg, isErr=false){ el.toast.textContent = msg || ''; el.toast.classList.toggle('error', !!isErr); }
+    function setResult(msg, type){ el.result.textContent = msg; el.result.classList.toggle('win', type==='win'); el.result.classList.toggle('lose', type==='lose'); }
+    function setSpinning(on){
+      state.spinning = on;
+      el.flipBtn.disabled = on;
+      el.flipBtn.classList.toggle('disabled', on);
+      el.coin.classList.toggle('flipping', on);
+    }
+    function finalRotate(isWin){
+      // heads (0deg) = WIN, tails (180deg) = TRY
+      el.coin.style.setProperty('--final-rot', isWin ? '0deg' : '180deg');
+      // apply immediate end pose (for when animation finishes)
+      if(!state.spinning){
+        el.coin.style.transform = `rotateY(${isWin?0:180}deg)`;
+      }
+    }
+    function formatMoney(n){ return Math.floor(n).toLocaleString('ru-RU'); }
+
+    /* ==== API ==== */
+    async function apiGetOrCreateUser(tgId, username){
+      const q = new URLSearchParams();
+      if (username) q.set('username', username);
+      const res = await fetch(`${API_BASE}/users/${encodeURIComponent(tgId)}?${q.toString()}`, { method:'GET' });
+      if(!res.ok) throw new Error(`Ошибка входа: ${res.status}`);
+      return res.json();
+    }
+    async function apiUserInfo(userId){
+      const res = await fetch(`${API_BASE}/users/info/${encodeURIComponent(userId)}`, { method:'GET' });
+      if(!res.ok) throw new Error(res.status === 404 ? 'Пользователь не найден' : `Ошибка ${res.status}`);
+      return res.json();
+    }
+    async function apiSpin(userId, bet){
+      const res = await fetch(`${API_BASE}/spin`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ user_id: userId, bet: bet })
+      });
+      if(!res.ok){
+        let msg = `Ошибка ${res.status}`;
+        try { const d = await res.json(); if (d?.detail) msg = d.detail; } catch {}
+        throw new Error(msg);
+      }
+      return res.json();
+    }
+
+    /* ==== LOGIN FLOW ==== */
+    function loadLocal(){
+      try{
+        const saved = JSON.parse(localStorage.getItem('flip_user') || 'null');
+        if(saved?.userId){ Object.assign(state, saved); }
+      }catch{}
+    }
+    function saveLocal(){
+      localStorage.setItem('flip_user', JSON.stringify({
+        userId: state.userId, tgId: state.tgId, username: state.username
+      }));
+    }
+    function showLogin(show){
+      el.loginModal.style.display = show ? 'grid' : 'none';
+      if(show){
+        el.inpTgId.focus();
+        el.inpTgId.value = state.tgId || '';
+        el.inpUsername.value = state.username || '';
+      }
+    }
+    async function ensureUser(){
+      if(!state.userId){ showLogin(true); return false; }
+      return true;
+    }
+    async function refreshBalance(){
+      if(!state.userId) return;
+      const info = await apiUserInfo(state.userId);
+      state.balance = info.balance ?? 0;
+      el.balance.textContent = formatMoney(state.balance);
+      el.hdrUser.textContent = `user_id=${info.user_id} ${info.username? ' • @'+info.username : ''}`;
+      // clamp bet to balance
+      const cur = Math.max(1, Math.min(Number(el.bet.value||1), state.balance || 1));
+      el.bet.value = cur;
+    }
+
+    /* ==== EVENTS ==== */
+    el.loginBtn.addEventListener('click', async ()=>{
+      el.loginErr.textContent = '';
+      try{
+        const tgId = Number(el.inpTgId.value);
+        const username = (el.inpUsername.value || '').trim().replace(/^@/,'');
+        if(!tgId || tgId < 0) return el.loginErr.textContent = 'Укажи корректный Telegram ID';
+        setToast('Входим…');
+        const { user_id } = await apiGetOrCreateUser(tgId, username);
+        state.userId = user_id; state.tgId = tgId; state.username = username || null; saveLocal();
+        await refreshBalance();
+        setToast('Готово, удачи!');
+        showLogin(false);
+      }catch(e){ el.loginErr.textContent = e.message || 'Ошибка входа'; }
+    });
+    el.cancelLogin.addEventListener('click', ()=> showLogin(false));
+    el.changeUserBtn.addEventListener('click', ()=> { showLogin(true); });
+
+    // Bet helpers
+    el.betMin.addEventListener('click', ()=> el.bet.value = 1);
+    el.bet10.addEventListener('click', ()=> el.bet.value = Math.max(1, (Number(el.bet.value)||0) + 10));
+    el.betHalf.addEventListener('click', ()=> el.bet.value = Math.max(1, Math.floor((state.balance||1)/2)));
+    el.betMax.addEventListener('click', ()=> el.bet.value = Math.max(1, state.balance||1));
+
+    // FLIP
+    el.flipBtn.addEventListener('click', async ()=>{
+      if(state.spinning) return;
+      const ok = await ensureUser(); if(!ok) return;
+      const bet = Math.floor(Number(el.bet.value||0));
+      if(!Number.isFinite(bet) || bet < 1){ return setToast('Ставка должна быть целым числом > 0', true); }
+      if(bet > state.balance){ return setToast('Недостаточно средств', true); }
+      setToast('');
+      setSpinning(true);
+      // старт анимации прямо сейчас — финальную сторону выставим после ответа
+      el.coin.classList.remove('flipping'); void el.coin.offsetWidth; // restart animation
+      el.coin.classList.add('flipping');
+
+      let isWin = false;
+      try{
+        const data = await apiSpin(state.userId, bet);
+        isWin = !!data.is_win;
+      }catch(e){
+        setSpinning(false);
+        setResult(e.message || 'Ошибка', 'lose');
+        setToast(e.message || 'Ошибка', true);
+        return;
+      }
+
+      // выставляем финальный ракурс и сообщение когда анимация закончится
+      finalRotate(isWin);
+      setTimeout(async ()=>{
+        setSpinning(false);
+        if(isWin){
+          setResult('Победа! 🎉', 'win');
+          launchConfetti();
+        }else{
+          setResult('Не повезло. Попробуй ещё!', 'lose');
+        }
+        try{ await refreshBalance(); }catch{}
+      }, 1220); // чуть меньше/больше длительности @keyframes
+    });
+
+    /* ==== INIT ==== */
+    (async function init(){
+      loadLocal();
+      if(state.userId){
+        try{ await refreshBalance(); }catch{ /* если что-то не так — попросим залогиниться */ showLogin(true); }
+      }else{
+        showLogin(true);
+      }
+      finalRotate(true); // базовая стойка (WIN лицом)
+    })();
+  </script>
+</body>
+</html>
