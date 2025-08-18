@@ -1,0 +1,23 @@
+[project]
+name = "bot"
+version = "0.1.0"
+requires-python = ">=3.13.2"
+description = "Aiogram bot for Telegram Gaming Platform"
+dependencies = [
+  "aiogram>=3.6",
+  "pyjwt>=2.8",
+  "app",
+]
+
+[tool.uv.sources]
+app = { workspace = true }
+
+[dependency-groups]
+dev = ["ruff"]
+
+[build-system]
+requires = ["uv-build>=0.8.11,<0.9.0"]
+build-backend = "uv_build"
+
+[project.scripts]
+bot = "services.bot.main:main"

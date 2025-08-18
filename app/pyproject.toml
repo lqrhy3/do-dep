@@ -1,0 +1,16 @@
+[project]
+name = "app"
+version = "0.1.0"
+requires-python = ">=3.13.2"
+description = "Shared models, DB session, settings, and game logic"
+dependencies = [
+  "pydantic>=2",
+  "pydantic-settings>=2",
+  "sqlalchemy>=2",
+  "asyncpg>=0.29",
+]
+
+
+[build-system]
+requires = ["uv-build>=0.8.11,<0.9.0"]
+build-backend = "uv_build"

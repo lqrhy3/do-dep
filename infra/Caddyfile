@@ -1,0 +1,18 @@
+sloty.yopdodep.xyz {
+  root * /srv
+  encode zstd gzip
+  file_server
+
+  @api path /api/*
+  handle @api {
+    reverse_proxy api:8000
+  }
+
+  # Optional hardening headers
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+  }
+}

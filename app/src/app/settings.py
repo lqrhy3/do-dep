@@ -27,11 +27,16 @@ class AppSettings(BaseSettings):
         env_file='.env',
         env_file_encoding='utf-8',
         extra='ignore',
+        env_ignore_empty=True,
     )
 
     bot_token: str
     game_url: str
     game_short_name: str
+
+    jwt_secret: str
+    api_jwt_secret: str
+    api_jwt_ttl: int
 
     initial_balance: int
     jackpot_multiplier: float
