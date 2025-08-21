@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>DoDep Casino — demo</title>
+  <title>YOP Casino — Flipper</title>
   <style>
     :root{
       --bg1:#0e0f1a; --bg2:#15172b;
@@ -21,115 +21,60 @@
       min-height:100svh; display:flex; align-items:center; justify-content:center; padding:24px;
     }
     .wrap{ width:min(100%, 980px); }
-    header{
-      display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px;
-    }
-    .brand{
-      font-weight:800; letter-spacing:.3px; font-size:20px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text; background-clip:text; color:transparent;
-    }
-    .card{
-      position:relative;
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02));
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:20px; padding:24px;
-      box-shadow: 0 10px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
-      backdrop-filter: blur(6px);
-      display:grid; grid-template-columns: 1fr 360px; gap:24px;
-    }
+    header{ display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
+    .brand{ font-weight:800; letter-spacing:.3px; font-size:20px; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip:text; color:transparent; }
+    .card{ position:relative; background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:24px; box-shadow: 0 10px 40px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(6px); display:grid; grid-template-columns: 1fr 360px; gap:24px; }
     @media (max-width:900px){ .card{ grid-template-columns: 1fr; } }
-
-    /* Left: stage */
-    .stage{
-      display:grid; place-items:center; padding:16px; border-radius:16px;
-      background: radial-gradient(500px 240px at 50% 110%, rgba(124,77,255,.25), transparent 60%);
-      min-height:420px; position:relative; overflow:hidden;
-    }
-
-    /* Coin */
+    .stage{ display:grid; place-items:center; padding:16px; border-radius:16px; background: radial-gradient(500px 240px at 50% 110%, rgba(124,77,255,.25), transparent 60%); min-height:420px; position:relative; overflow:hidden; }
     .coin-scene{ perspective: 1200px; }
-    .coin{
-      width:180px; height:180px; position:relative; transform-style: preserve-3d;
-      transition: transform 1.2s cubic-bezier(.2,.7,.2,1);
-      filter: drop-shadow(0 24px 32px rgba(0,0,0,.5));
-    }
-    .coin .face{
-      position:absolute; inset:0; border-radius:50%;
-      display:grid; place-items:center; font-weight:900; font-size:44px; letter-spacing:.06em;
-      backface-visibility: hidden;
-      background:
-        radial-gradient(80% 80% at 50% 30%, rgba(255,255,255,.4), rgba(255,255,255,.05) 50%, transparent 60%),
-        conic-gradient(from 0deg, #f5d26a, #b4882f, #f1cd64, #9e7729, #f5d26a);
-      border:2px solid rgba(255,255,255,.35);
-      position:absolute;
-    }
-    .coin .face::after{
-      content:""; position:absolute; inset:10px; border-radius:50%;
-      border:2px dashed rgba(0,0,0,.18);
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
-    }
+    .coin{ width:180px; height:180px; position:relative; transform-style: preserve-3d; transition: transform 1.2s cubic-bezier(.2,.7,.2,1); filter: drop-shadow(0 24px 32px rgba(0,0,0,.5)); }
+    .coin .face{ position:absolute; inset:0; border-radius:50%; display:grid; place-items:center; font-weight:900; font-size:44px; letter-spacing:.06em; backface-visibility: hidden; background: radial-gradient(80% 80% at 50% 30%, rgba(255,255,255,.4), rgba(255,255,255,.05) 50%, transparent 60%), conic-gradient(from 0deg, #f5d26a, #b4882f, #f1cd64, #9e7729, #f5d26a); border:2px solid rgba(255,255,255,.35); }
+    .coin .face::after{ content:""; position:absolute; inset:10px; border-radius:50%; border:2px dashed rgba(0,0,0,.18); box-shadow: inset 0 0 0 2px rgba(255,255,255,.25); }
     .face.heads{ transform: rotateY(0deg); }
     .face.tails{ transform: rotateY(180deg); }
-    .coin.flipping{ animation: flip 1.25s cubic-bezier(.2,.7,.2,1) 1; }
+    .coin.flipping{ animation: flip 2.4s cubic-bezier(.22,.68,.18,1) 1; }
     @keyframes flip{
-      0%{ transform: rotateY(0deg) translateZ(0) rotateX(0); }
-      20%{ transform: rotateY(360deg) translateZ(6px) rotateX(10deg);}
-      60%{ transform: rotateY(1440deg) translateZ(0) rotateX(0deg);}
-      100%{ transform: rotateY(var(--final-rot, 0deg)); }
+      0%{
+        transform: rotateY(0deg) translateZ(0) rotateX(0);
+        animation-timing-function: cubic-bezier(.25,.6,.3,1);
+      }
+      20%{
+        transform: rotateY(360deg) translateZ(10px) rotateX(12deg);
+        animation-timing-function: cubic-bezier(.2,.75,.25,1);
+      }
+      60%{
+        transform: rotateY(1440deg) translateZ(2px) rotateX(0deg);
+        animation-timing-function: cubic-bezier(.12,.9,.2,1);
+      }
+      90%{
+        transform: rotateY(1800deg) translateZ(0) rotateX(0deg);
+        animation-timing-function: cubic-bezier(.1,.95,.2,1); /* strong ease-out for suspense */
+      }
+      100%{
+        transform: rotateY(var(--final-rot, 0deg));
+      }
     }
-    .result{
-      position:absolute; bottom:16px; left:16px; right:16px; display:flex; justify-content:center;
-      font-weight:700; color:var(--muted);
-    }
+    .result{ position:absolute; bottom:16px; left:16px; right:16px; display:flex; justify-content:center; font-weight:700; color:var(--muted); }
     .result.win{ color:var(--win); text-shadow:0 0 22px rgba(39,233,140,.35); }
     .result.lose{ color:var(--lose); text-shadow:0 0 22px rgba(255,81,113,.25); }
-
-    /* Right: controls */
     .panel{ display:flex; flex-direction:column; gap:16px; }
     .row{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    .balance{
-      display:flex; gap:12px; align-items:center;
-      background: var(--glass); border:1px solid rgba(255,255,255,.12);
-      border-radius:12px; padding:12px 14px; font-weight:700;
-    }
+    .balance{ display:flex; gap:12px; align-items:center; background: var(--glass); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:12px 14px; font-weight:700; }
     .muted{ color:var(--muted); font-weight:600; }
-    .bet{
-      display:flex; gap:10px; align-items:center;
-      background: var(--glass); border:1px solid rgba(255,255,255,.12);
-      border-radius:12px; padding:10px;
-    }
-    .bet input{
-      width:100%; background:transparent; border:none; outline:none; color:var(--text);
-      font-weight:800; font-size:18px; padding:8px 10px; text-align:right;
-      -moz-appearance: textfield;
-    }
-    .bet input::-webkit-outer-spin-button,
-    .bet input::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
-    .btn, button{
-      appearance:none; border:none; cursor:pointer;
-      background:linear-gradient(90deg, var(--accent), var(--accent2));
-      color:#101222; font-weight:900; letter-spacing:.05em;
-      padding:14px 18px; border-radius:12px; box-shadow:0 10px 30px rgba(124,77,255,.35);
-      transition:transform .08s ease, box-shadow .2s ease, opacity .2s ease;
-    }
+    .bet{ display:flex; gap:10px; align-items:center; background: var(--glass); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:10px; }
+    .bet input{ width:100%; background:transparent; border:none; outline:none; color:var(--text); font-weight:800; font-size:18px; padding:8px 10px; text-align:right; -moz-appearance: textfield; }
+    .bet input::-webkit-outer-spin-button, .bet input::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+    .btn, button{ appearance:none; border:none; cursor:pointer; background:linear-gradient(90deg, var(--accent), var(--accent2)); color:#101222; font-weight:900; letter-spacing:.05em; padding:14px 18px; border-radius:12px; box-shadow:0 10px 30px rgba(124,77,255,.35); transition:transform .08s ease, box-shadow .2s ease, opacity .2s ease; }
     .btn:hover{ transform: translateY(-1px); }
     .btn:active{ transform: translateY(1px) scale(.99); }
-    .btn.secondary{
-      background: transparent; color:var(--text);
-      border:1px solid rgba(255,255,255,.16); box-shadow:none;
-    }
+    .btn.secondary{ background: transparent; color:var(--text); border:1px solid rgba(255,255,255,.16); box-shadow:none; }
     .grid-buttons{ display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
     .flip{ font-size:20px; padding:18px; border-radius:14px; }
     .disabled, .btn:disabled{ opacity:.6; cursor:not-allowed; filter:grayscale(.2); }
     .toast{ min-height:22px; color:var(--muted); font-weight:600; }
     .toast.error{ color:var(--lose); }
     .tiny{ font-size:12px; color:var(--muted); }
-
-    /* Confetti canvas */
     #confetti{ position:absolute; inset:0; pointer-events:none; }
-
-    /* Modal (Session) */
     .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; place-items:center; z-index:1000; }
     .modal{ width:min(92vw, 520px); background:#15172b; border:1px solid rgba(255,255,255,.12); border-radius:16px; padding:18px; }
     .modal h3{ margin:0 0 10px; }
@@ -143,7 +88,7 @@
 <body>
   <div class="wrap">
     <header>
-      <div class="brand">FLIP CASINO — demo</div>
+      <div class="brand">YOP CASINO — flipper</div>
       <div class="row">
         <div id="hdr-user" class="muted tiny"></div>
         <button class="btn secondary" id="changeUserBtn">Сменить пользователя</button>
@@ -182,7 +127,7 @@
 
         <button id="flipBtn" class="btn flip">FLIP</button>
         <div id="toast" class="toast"></div>
-        <div class="tiny">Шанс 50% на «секретный» джекпот. Баланс приходит из API и обновляется после каждого броска. Лучший результат шлём через <code>/score</code>.</div>
+        <div class="tiny">Шанс на джекпот 50%, все честно. YopCasino не несет никакой ответственности. </div>
       </div>
     </section>
   </div>
@@ -208,7 +153,7 @@
 
 <script>
   /* ==== CONFIG ==== */
-  const API = '/api/v1'; // same-origin behind Caddy
+  const API = '/api/v1'; // same-origin behind the reverse proxy
 
   /* ==== STATE ==== */
   const state = {
@@ -217,7 +162,7 @@
     tgId: null,
     username: null,
     balance: 0,
-    best: Number(localStorage.getItem('best_score')||0) || 0,
+    bestWin: Number(localStorage.getItem('best_win') ?? localStorage.getItem('best_score') ?? 0) || 0,
     spinning: false,
     postingScore: false,
   };
@@ -267,9 +212,9 @@
   function setSpinning(on){ state.spinning = on; el.flipBtn.disabled = on; el.flipBtn.classList.toggle('disabled', on); el.coin.classList.toggle('flipping', on); }
   function finalRotate(isWin){ el.coin.style.setProperty('--final-rot', isWin ? '0deg' : '180deg'); if(!state.spinning){ el.coin.style.transform = `rotateY(${isWin?0:180}deg)`; } }
   function formatMoney(n){ return Math.floor(n).toLocaleString('ru-RU'); }
-  function updateHeader(){ el.hdrUser.textContent = state.tgId ? `tg_id=${state.tgId}${state.username? ' • @'+state.username : ''}` : ''; }
+  function updateHeader(){ el.hdrUser.textContent = `${state.username? '@'+state.username : ''}`; }
   function updateBalanceUI(){ const b = Number.isFinite(state.balance) ? state.balance : 0; el.balance.textContent = formatMoney(b); const cur = Math.max(1, Math.min(Number(el.bet.value||1), Math.max(1,b))); el.bet.value = cur; }
-  function rememberBest(score){ if(score > state.best){ state.best = score; localStorage.setItem('best_score', String(score)); return true; } return false; }
+  function rememberBestWin(win){ if(win > state.bestWin){ state.bestWin = win; localStorage.setItem('best_win', String(win)); return true; } return false; }
   function showSessionModal(show, msg){ el.sessionModal.style.display = show ? 'grid' : 'none'; el.sessionErr.textContent = msg || ''; if(show) el.tokenInput.focus(); }
 
   /* ==== API ==== */
@@ -299,11 +244,13 @@
   el.closeSessionModal.addEventListener('click', ()=> showSessionModal(false));
   el.exchangeBtn.addEventListener('click', async ()=>{
     const t = (el.tokenInput.value||'').trim(); if(!t) return; setToast('Обмен токена…');
-    try{ const data = await apiOpenSession(t); state.jwt=data.jwt; state.userId=data.user_id||null; state.tgId=data.tg_id||null; state.username=data.username||null; state.balance=Number(data.balance||0); updateHeader(); updateBalanceUI(); showSessionModal(false); setToast('Готово!'); }
-    catch(e){ el.sessionErr.textContent = e.message || 'Не удалось обменять токен'; }
+    try{
+      const data = await apiOpenSession(t);
+      state.jwt=data.jwt; state.userId=data.user_id||null; state.tgId=data.tg_id||null; state.username=data.username||null; state.balance=Number(data.balance||0);
+      updateHeader(); updateBalanceUI(); showSessionModal(false); setToast('Готово!');
+    } catch(e){ el.sessionErr.textContent = e.message || 'Не удалось обменять токен'; }
   });
 
-  // FLIP
   el.flipBtn.addEventListener('click', async ()=>{
     if(state.spinning) return;
     if(!state.jwt){ showSessionModal(true, 'Эта страница должна открываться из Telegram. Нажмите Play в боте.'); return; }
@@ -314,35 +261,52 @@
     setToast(''); setSpinning(true);
     el.coin.classList.remove('flipping'); void el.coin.offsetWidth; el.coin.classList.add('flipping');
 
-    let isWin = false; let newBalance = state.balance;
+    let isWin = false; let newBalance = state.balance; let winAmount = 0;
     try{
       const data = await apiSpin(bet);
       isWin = !!data.is_win;
-      if(typeof data.balance !== 'undefined'){ newBalance = Number(data.balance); state.balance = newBalance; updateBalanceUI(); }
-    }catch(e){
-      setSpinning(false); setResult(e.message || 'Ошибка', 'lose'); setToast(e.message || 'Ошибка', true); return;
-    }
+      winAmount = Number(data.win_amount || 0);
+      // Defer applying balance until animation finishes (to avoid spoilers)
+      const nextBalance = (typeof data.balance !== 'undefined') ? Number(data.balance) : state.balance;
+      newBalance = nextBalance;
+    }catch(e){ setSpinning(false); setResult(e.message || 'Ошибка', 'lose'); setToast(e.message || 'Ошибка', true); return; }
 
     finalRotate(isWin);
-    setTimeout(async ()=>{
-      setSpinning(false);
-      if(isWin){ setResult('Победа! 🎉', 'win'); launchConfetti(); }
-      else{ setResult('Не повезло. Попробуй ещё!', 'lose'); }
 
-      // Report best score (we use BALANCE as score for MVP)
-      if(rememberBest(newBalance) && !state.postingScore){
+    // Finalize when the flip animation ends (suspense-friendly), with a timeout fallback.
+    let finalized = false;
+    const finalize = async () => {
+      if (finalized) return; finalized = true;
+      setSpinning(false);
+      if (isWin) { setResult(`Победа! +${formatMoney(winAmount)}`, 'win'); launchConfetti(); }
+      else { setResult('Не повезло. Попробуй ещё!', 'lose'); }
+
+      // Now commit balance so the outcome isn't revealed early
+      if (Number.isFinite(newBalance)) { state.balance = newBalance; updateBalanceUI(); }
+
+      // Report best score (BEST SINGLE WIN)
+      if (isWin && rememberBestWin(winAmount) && !state.postingScore) {
         state.postingScore = true;
-        try{ await apiScore(newBalance); setToast('Рекорд отправлен в таблицу лидеров ✅'); }
-        catch(e){ setToast('Не удалось отправить результат: ' + (e.message||'ошибка'), true); }
-        finally{ state.postingScore = false; }
+        try { await apiScore(winAmount); setToast('Рекорд (лучший выигрыш) отправлен ✅'); }
+        catch (e) { setToast('Не удалось отправить результат: ' + (e.message || 'ошибка'), true); }
+        finally { state.postingScore = false; }
       }
-    }, 1220);
+    };
+
+    const onEnd = (ev) => {
+      if (ev.animationName !== 'flip') return;
+      el.coin.removeEventListener('animationend', onEnd);
+      finalize();
+    };
+    el.coin.addEventListener('animationend', onEnd, { once: true });
+
+    // Safety fallback in case animationend doesn't fire
+    setTimeout(finalize, 2600);
   });
 
   /* ==== INIT ==== */
   (async function init(){
     try{ el.changeUserBtn.textContent = 'Перезагрузить сессию'; }catch{}
-    // session from URL
     const params = new URLSearchParams(location.search);
     const t = params.get('t');
     if(!t){ showSessionModal(true, 'Нет параметра t. Открой игру из Telegram.'); finalRotate(true); return; }
@@ -355,6 +319,7 @@
     finalRotate(true);
   })();
 </script>
+<!-- Telegram Gaming Platform SDK -->
 <script src="https://telegram.org/js/games.js"></script>
 </body>
 </html>

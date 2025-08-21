@@ -1,4 +1,4 @@
-sloty.yopdodep.xyz {
+flipper.yopdodep.xyz {
   root * /srv
   encode zstd gzip
   file_server

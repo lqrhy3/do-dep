@@ -5,7 +5,6 @@ services:
       dockerfile: services/api/Dockerfile
     env_file: .env
     restart: unless-stopped
-    ports: ["8500:8000"]
 
   bot:
     build:

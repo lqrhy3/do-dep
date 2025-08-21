@@ -41,7 +41,7 @@ async def _send_game(msg: Message):
 @router.inline_query()
 async def inline_query_handler(query: InlineQuery):
     await query.answer(
-        results=[InlineQueryResultGame(id='1', game_short_name=settings.app.game_short_name)],
+        results=[InlineQueryResultGame(id='2', game_short_name=settings.app.game_short_name)],
         cache_time=0
     )
 

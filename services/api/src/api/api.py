@@ -134,7 +134,8 @@ async def spin_endpoint(
     symbol_idxs = make_spin()
     multiplier = compute_multiplier(symbol_idxs)
     is_win = multiplier > 0
-    updated_balance = balance - bet + bet * multiplier
+    win_amount = bet * multiplier
+    updated_balance = balance - bet + win_amount
 
     await db_session.execute(
         update(Wallet)
@@ -146,7 +147,8 @@ async def spin_endpoint(
     return {
         'is_win': is_win,
         'symbol_idxs': symbol_idxs,
-        'balance': updated_balance
+        'balance': updated_balance,
+        'win_amount': win_amount
     }
 
 
