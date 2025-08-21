@@ -70,6 +70,11 @@ async def open_session(req: SessionIn, db_session: AsyncSession = Depends(get_as
         user.username = username
         await db_session.commit()
 
+    user_id = user.id
+    query = select(Wallet.balance).where(Wallet.user_id == user_id)
+    result = await db_session.execute(query)
+    balance = result.scalar_one_or_none()
+
     ctx = {}
     if launch.get('inline_message_id'):
         ctx['inline_message_id'] = launch['inline_message_id']
@@ -87,7 +92,14 @@ async def open_session(req: SessionIn, db_session: AsyncSession = Depends(get_as
     }
     api_jwt = jwt.encode(api_claims, settings.app.api_jwt_secret, algorithm='HS256')
 
-    return SessionOut(tg_id=tg_id, username=user.username, user_id=user.id, jwt=api_jwt, ctx=ctx)
+    return SessionOut(
+        tg_id=tg_id,
+        username=user.username,
+        user_id=user.id,
+        balance=balance,
+        jwt=api_jwt,
+        ctx=ctx
+    )
 
 
 @router.post('/spin')
@@ -134,6 +146,7 @@ async def spin_endpoint(
     return {
         'is_win': is_win,
         'symbol_idxs': symbol_idxs,
+        'balance': updated_balance
     }
 
 

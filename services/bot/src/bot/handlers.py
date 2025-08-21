@@ -23,7 +23,7 @@ def _build_launch_token(cb: CallbackQuery) -> str:
         'iat': int(time.time()),
         'exp': int(time.time()) + 10 * 60,
     }
-    return jwt.encode(payload, settings.app.jwt_token, algorithm='HS256')
+    return jwt.encode(payload, settings.app.jwt_secret, algorithm='HS256')
 
 
 async def _send_game(msg: Message):

@@ -47,9 +47,7 @@
     }
 
     /* Coin */
-    .coin-scene{
-      perspective: 1200px;
-    }
+    .coin-scene{ perspective: 1200px; }
     .coin{
       width:180px; height:180px; position:relative; transform-style: preserve-3d;
       transition: transform 1.2s cubic-bezier(.2,.7,.2,1);
@@ -130,19 +128,12 @@
     /* Confetti canvas */
     #confetti{ position:absolute; inset:0; pointer-events:none; }
 
-    /* Modal */
-    .modal-backdrop{
-      position:fixed; inset:0; background:rgba(0,0,0,.5);
-      display:none; place-items:center; z-index:1000;
-    }
-    .modal{ width:min(92vw, 480px); background:#15172b; border:1px solid rgba(255,255,255,.12);
-      border-radius:16px; padding:18px; }
+    /* Modal (Session) */
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; place-items:center; z-index:1000; }
+    .modal{ width:min(92vw, 520px); background:#15172b; border:1px solid rgba(255,255,255,.12); border-radius:16px; padding:18px; }
     .modal h3{ margin:0 0 10px; }
     .modal .form{ display:flex; flex-direction:column; gap:10px; }
-    .input{
-      display:flex; align-items:center; gap:10px; background: var(--glass); border:1px solid rgba(255,255,255,.12);
-      border-radius:10px; padding:10px;
-    }
+    .input{ display:flex; align-items:center; gap:10px; background: var(--glass); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:10px; }
     .input input{ width:100%; background:transparent; border:none; outline:none; color:var(--text); font-weight:700; }
     .modal .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:6px; }
     .link{ background:none; border:none; color:var(--muted); text-decoration:underline; cursor:pointer; padding:0; }
@@ -190,260 +181,178 @@
 
         <button id="flipBtn" class="btn flip">FLIP</button>
         <div id="toast" class="toast"></div>
-        <div class="tiny">Правила: шанс 50% на «секретный» джекпот. Если повезёт — залетает <code>jackpot_multiplier</code> (см. settings), иначе проигрыш. Баланс обновляется после каждого броска.</div>
+        <div class="tiny">Шанс 50% на «секретный» джекпот. Баланс приходит из API и обновляется после каждого броска. Лучший результат шлём через <code>/score</code>.</div>
       </div>
     </section>
   </div>
 
-  <!-- Login modal -->
-  <div id="loginModal" class="modal-backdrop">
+  <!-- Session modal -->
+  <div id="sessionModal" class="modal-backdrop">
     <div class="modal">
-      <h3>Кто ты в Telegram?</h3>
+      <h3>Нужна сессия из Telegram</h3>
       <div class="form">
+        <div class="tiny">Открой игру через кнопку <b>Play</b> в боте. Для отладки можно вставить токен <code>t</code> вручную.</div>
         <label class="input">
-          <span class="muted">Telegram ID (число)</span>
-          <input id="inpTgId" type="number" inputmode="numeric" placeholder="например, 123456789" />
-        </label>
-        <label class="input">
-          <span class="muted">Username (необязательно)</span>
-          <input id="inpUsername" type="text" placeholder="@nickname" />
+          <span class="muted">Token t</span>
+          <input id="tokenInput" type="text" placeholder="вставь t=…" />
         </label>
         <div class="actions">
-          <button id="loginBtn" class="btn">Войти</button>
-          <button id="cancelLogin" class="link">Отмена</button>
+          <button id="exchangeBtn" class="btn">Обменять токен</button>
+          <button id="closeSessionModal" class="link">Закрыть</button>
         </div>
-        <div id="loginErr" class="toast error"></div>
+        <div id="sessionErr" class="toast error"></div>
       </div>
     </div>
   </div>
 
-  <script>
-    /* ==== CONFIG ==== */
-    // Если фронт и бэк на одном домене/порте — оставь как есть.
-    // Иначе укажи полный адрес, например: 'http://localhost:8000/api/v1'
-    const API_BASE = 'http://localhost:8500/api/v1';
+<script>
+  /* ==== CONFIG ==== */
+  const API = '/api/v1'; // same-origin behind Caddy
 
-    /* ==== STATE ==== */
-    const state = {
-      userId: null,
-      tgId: null,
-      username: null,
-      balance: 0,
-      spinning: false,
-    };
+  /* ==== STATE ==== */
+  const state = {
+    jwt: null,
+    userId: null,
+    tgId: null,
+    username: null,
+    balance: 0,
+    best: Number(localStorage.getItem('best_score')||0) || 0,
+    spinning: false,
+    postingScore: false,
+  };
 
-    /* ==== UI ELEMENTS ==== */
-    const el = {
-      coin: document.getElementById('coin'),
-      result: document.getElementById('result'),
-      balance: document.getElementById('balance'),
-      bet: document.getElementById('bet'),
-      flipBtn: document.getElementById('flipBtn'),
-      toast: document.getElementById('toast'),
-      betMin: document.getElementById('betMin'),
-      bet10: document.getElementById('bet10'),
-      betHalf: document.getElementById('betHalf'),
-      betMax: document.getElementById('betMax'),
-      confetti: document.getElementById('confetti'),
-      // modal
-      loginModal: document.getElementById('loginModal'),
-      inpTgId: document.getElementById('inpTgId'),
-      inpUsername: document.getElementById('inpUsername'),
-      loginBtn: document.getElementById('loginBtn'),
-      cancelLogin: document.getElementById('cancelLogin'),
-      loginErr: document.getElementById('loginErr'),
-      hdrUser: document.getElementById('hdr-user'),
-      changeUserBtn: document.getElementById('changeUserBtn'),
-    };
+  /* ==== UI ELEMENTS ==== */
+  const el = {
+    coin: document.getElementById('coin'),
+    result: document.getElementById('result'),
+    balance: document.getElementById('balance'),
+    bet: document.getElementById('bet'),
+    flipBtn: document.getElementById('flipBtn'),
+    toast: document.getElementById('toast'),
+    betMin: document.getElementById('betMin'),
+    bet10: document.getElementById('bet10'),
+    betHalf: document.getElementById('betHalf'),
+    betMax: document.getElementById('betMax'),
+    confetti: document.getElementById('confetti'),
+    hdrUser: document.getElementById('hdr-user'),
+    changeUserBtn: document.getElementById('changeUserBtn'),
+    // session modal
+    sessionModal: document.getElementById('sessionModal'),
+    tokenInput: document.getElementById('tokenInput'),
+    exchangeBtn: document.getElementById('exchangeBtn'),
+    closeSessionModal: document.getElementById('closeSessionModal'),
+    sessionErr: document.getElementById('sessionErr'),
+  };
 
-    /* ==== CONFETTI (микро-имплементация) ==== */
-    const ctx = el.confetti.getContext('2d');
-    let confettiParts = [];
-    function resizeCanvas(){
-      el.confetti.width = el.confetti.parentElement.clientWidth;
-      el.confetti.height = el.confetti.parentElement.clientHeight;
-    }
-    window.addEventListener('resize', resizeCanvas); resizeCanvas();
-
-    function launchConfetti(){
-      const w = el.confetti.width, h = el.confetti.height;
-      confettiParts = Array.from({length: 160}, () => ({
-        x: Math.random()*w, y: -10 - Math.random()*40,
-        r: 2 + Math.random()*4,
-        c: `hsl(${360*Math.random()}, 90%, 60%)`,
-        vx: -2 + Math.random()*4,
-        vy: 2 + Math.random()*3,
-        a: Math.random()*Math.PI
-      }));
-      (function tick(){
-        ctx.clearRect(0,0,w,h);
-        confettiParts.forEach(p=>{
-          p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.a += 0.1;
-          ctx.save();
-          ctx.translate(p.x, p.y);
-          ctx.rotate(p.a);
-          ctx.fillStyle = p.c;
-          ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
-          ctx.restore();
-        });
-        confettiParts = confettiParts.filter(p => p.y < h+20);
-        if(confettiParts.length) requestAnimationFrame(tick);
-      })();
-    }
-
-    /* ==== HELPERS ==== */
-    function setToast(msg, isErr=false){ el.toast.textContent = msg || ''; el.toast.classList.toggle('error', !!isErr); }
-    function setResult(msg, type){ el.result.textContent = msg; el.result.classList.toggle('win', type==='win'); el.result.classList.toggle('lose', type==='lose'); }
-    function setSpinning(on){
-      state.spinning = on;
-      el.flipBtn.disabled = on;
-      el.flipBtn.classList.toggle('disabled', on);
-      el.coin.classList.toggle('flipping', on);
-    }
-    function finalRotate(isWin){
-      // heads (0deg) = WIN, tails (180deg) = TRY
-      el.coin.style.setProperty('--final-rot', isWin ? '0deg' : '180deg');
-      // apply immediate end pose (for when animation finishes)
-      if(!state.spinning){
-        el.coin.style.transform = `rotateY(${isWin?0:180}deg)`;
-      }
-    }
-    function formatMoney(n){ return Math.floor(n).toLocaleString('ru-RU'); }
-
-    /* ==== API ==== */
-    async function apiGetOrCreateUser(tgId, username){
-      const q = new URLSearchParams();
-      if (username) q.set('username', username);
-      const res = await fetch(`${API_BASE}/users/${encodeURIComponent(tgId)}?${q.toString()}`, { method:'GET' });
-      if(!res.ok) throw new Error(`Ошибка входа: ${res.status}`);
-      return res.json();
-    }
-    async function apiUserInfo(userId){
-      const res = await fetch(`${API_BASE}/users/info/${encodeURIComponent(userId)}`, { method:'GET' });
-      if(!res.ok) throw new Error(res.status === 404 ? 'Пользователь не найден' : `Ошибка ${res.status}`);
-      return res.json();
-    }
-    async function apiSpin(userId, bet){
-      const res = await fetch(`${API_BASE}/spin`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ user_id: userId, bet: bet })
-      });
-      if(!res.ok){
-        let msg = `Ошибка ${res.status}`;
-        try { const d = await res.json(); if (d?.detail) msg = d.detail; } catch {}
-        throw new Error(msg);
-      }
-      return res.json();
-    }
-
-    /* ==== LOGIN FLOW ==== */
-    function loadLocal(){
-      try{
-        const saved = JSON.parse(localStorage.getItem('flip_user') || 'null');
-        if(saved?.userId){ Object.assign(state, saved); }
-      }catch{}
-    }
-    function saveLocal(){
-      localStorage.setItem('flip_user', JSON.stringify({
-        userId: state.userId, tgId: state.tgId, username: state.username
-      }));
-    }
-    function showLogin(show){
-      el.loginModal.style.display = show ? 'grid' : 'none';
-      if(show){
-        el.inpTgId.focus();
-        el.inpTgId.value = state.tgId || '';
-        el.inpUsername.value = state.username || '';
-      }
-    }
-    async function ensureUser(){
-      if(!state.userId){ showLogin(true); return false; }
-      return true;
-    }
-    async function refreshBalance(){
-      if(!state.userId) return;
-      const info = await apiUserInfo(state.userId);
-      state.balance = info.balance ?? 0;
-      el.balance.textContent = formatMoney(state.balance);
-      el.hdrUser.textContent = `user_id=${info.user_id} ${info.username? ' • @'+info.username : ''}`;
-      // clamp bet to balance
-      const cur = Math.max(1, Math.min(Number(el.bet.value||1), state.balance || 1));
-      el.bet.value = cur;
-    }
-
-    /* ==== EVENTS ==== */
-    el.loginBtn.addEventListener('click', async ()=>{
-      el.loginErr.textContent = '';
-      try{
-        const tgId = Number(el.inpTgId.value);
-        const username = (el.inpUsername.value || '').trim().replace(/^@/,'');
-        if(!tgId || tgId < 0) return el.loginErr.textContent = 'Укажи корректный Telegram ID';
-        setToast('Входим…');
-        const { user_id } = await apiGetOrCreateUser(tgId, username);
-        state.userId = user_id; state.tgId = tgId; state.username = username || null; saveLocal();
-        await refreshBalance();
-        setToast('Готово, удачи!');
-        showLogin(false);
-      }catch(e){ el.loginErr.textContent = e.message || 'Ошибка входа'; }
-    });
-    el.cancelLogin.addEventListener('click', ()=> showLogin(false));
-    el.changeUserBtn.addEventListener('click', ()=> { showLogin(true); });
-
-    // Bet helpers
-    el.betMin.addEventListener('click', ()=> el.bet.value = 1);
-    el.bet10.addEventListener('click', ()=> el.bet.value = Math.max(1, (Number(el.bet.value)||0) + 10));
-    el.betHalf.addEventListener('click', ()=> el.bet.value = Math.max(1, Math.floor((state.balance||1)/2)));
-    el.betMax.addEventListener('click', ()=> el.bet.value = Math.max(1, state.balance||1));
-
-    // FLIP
-    el.flipBtn.addEventListener('click', async ()=>{
-      if(state.spinning) return;
-      const ok = await ensureUser(); if(!ok) return;
-      const bet = Math.floor(Number(el.bet.value||0));
-      if(!Number.isFinite(bet) || bet < 1){ return setToast('Ставка должна быть целым числом > 0', true); }
-      if(bet > state.balance){ return setToast('Недостаточно средств', true); }
-      setToast('');
-      setSpinning(true);
-      // старт анимации прямо сейчас — финальную сторону выставим после ответа
-      el.coin.classList.remove('flipping'); void el.coin.offsetWidth; // restart animation
-      el.coin.classList.add('flipping');
-
-      let isWin = false;
-      try{
-        const data = await apiSpin(state.userId, bet);
-        isWin = !!data.is_win;
-      }catch(e){
-        setSpinning(false);
-        setResult(e.message || 'Ошибка', 'lose');
-        setToast(e.message || 'Ошибка', true);
-        return;
-      }
-
-      // выставляем финальный ракурс и сообщение когда анимация закончится
-      finalRotate(isWin);
-      setTimeout(async ()=>{
-        setSpinning(false);
-        if(isWin){
-          setResult('Победа! 🎉', 'win');
-          launchConfetti();
-        }else{
-          setResult('Не повезло. Попробуй ещё!', 'lose');
-        }
-        try{ await refreshBalance(); }catch{}
-      }, 1220); // чуть меньше/больше длительности @keyframes
-    });
-
-    /* ==== INIT ==== */
-    (async function init(){
-      loadLocal();
-      if(state.userId){
-        try{ await refreshBalance(); }catch{ /* если что-то не так — попросим залогиниться */ showLogin(true); }
-      }else{
-        showLogin(true);
-      }
-      finalRotate(true); // базовая стойка (WIN лицом)
+  /* ==== CONFETTI ==== */
+  const ctx = el.confetti.getContext('2d');
+  let confettiParts = [];
+  function resizeCanvas(){ el.confetti.width = el.confetti.parentElement.clientWidth; el.confetti.height = el.confetti.parentElement.clientHeight; }
+  window.addEventListener('resize', resizeCanvas); resizeCanvas();
+  function launchConfetti(){
+    const w = el.confetti.width, h = el.confetti.height;
+    confettiParts = Array.from({length: 160}, () => ({ x: Math.random()*w, y: -10 - Math.random()*40, r: 2 + Math.random()*4, c: `hsl(${360*Math.random()}, 90%, 60%)`, vx: -2 + Math.random()*4, vy: 2 + Math.random()*3, a: Math.random()*Math.PI }));
+    (function tick(){
+      ctx.clearRect(0,0,w,h);
+      confettiParts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.03; p.a+=0.1; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.fillStyle=p.c; ctx.fillRect(-p.r,-p.r,p.r*2,p.r*2); ctx.restore(); });
+      confettiParts = confettiParts.filter(p => p.y < h+20);
+      if(confettiParts.length) requestAnimationFrame(tick);
     })();
-  </script>
+  }
+
+  /* ==== HELPERS ==== */
+  function setToast(msg, isErr=false){ el.toast.textContent = msg || ''; el.toast.classList.toggle('error', !!isErr); }
+  function setResult(msg, type){ el.result.textContent = msg; el.result.classList.toggle('win', type==='win'); el.result.classList.toggle('lose', type==='lose'); }
+  function setSpinning(on){ state.spinning = on; el.flipBtn.disabled = on; el.flipBtn.classList.toggle('disabled', on); el.coin.classList.toggle('flipping', on); }
+  function finalRotate(isWin){ el.coin.style.setProperty('--final-rot', isWin ? '0deg' : '180deg'); if(!state.spinning){ el.coin.style.transform = `rotateY(${isWin?0:180}deg)`; } }
+  function formatMoney(n){ return Math.floor(n).toLocaleString('ru-RU'); }
+  function updateHeader(){ el.hdrUser.textContent = state.tgId ? `tg_id=${state.tgId}${state.username? ' • @'+state.username : ''}` : ''; }
+  function updateBalanceUI(){ const b = Number.isFinite(state.balance) ? state.balance : 0; el.balance.textContent = formatMoney(b); const cur = Math.max(1, Math.min(Number(el.bet.value||1), Math.max(1,b))); el.bet.value = cur; }
+  function rememberBest(score){ if(score > state.best){ state.best = score; localStorage.setItem('best_score', String(score)); return true; } return false; }
+  function showSessionModal(show, msg){ el.sessionModal.style.display = show ? 'grid' : 'none'; el.sessionErr.textContent = msg || ''; if(show) el.tokenInput.focus(); }
+
+  /* ==== API ==== */
+  async function apiOpenSession(t){
+    const res = await fetch(`${API}/session`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ t }) });
+    if(!res.ok){ let msg=`Session error ${res.status}`; try{ const d=await res.json(); if(d?.detail) msg=d.detail; }catch{} throw new Error(msg); }
+    return res.json();
+  }
+  async function apiSpin(bet){
+    const res = await fetch(`${API}/spin`, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${state.jwt}` }, body: JSON.stringify({ bet }) });
+    if(!res.ok){ let msg=`Spin error ${res.status}`; try{ const d=await res.json(); if(d?.detail) msg=d.detail; }catch{} throw new Error(msg); }
+    return res.json();
+  }
+  async function apiScore(score){
+    const res = await fetch(`${API}/score`, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization': `Bearer ${state.jwt}` }, body: JSON.stringify({ score }) });
+    if(!res.ok){ let msg=`Score error ${res.status}`; try{ const d=await res.json(); if(d?.detail) msg=d.detail; }catch{} throw new Error(msg); }
+    return res.json();
+  }
+
+  /* ==== EVENTS ==== */
+  el.betMin.addEventListener('click', ()=> el.bet.value = 1);
+  el.bet10.addEventListener('click', ()=> el.bet.value = Math.max(1, (Number(el.bet.value)||0) + 10));
+  el.betHalf.addEventListener('click', ()=> el.bet.value = Math.max(1, Math.floor((state.balance||1)/2)) );
+  el.betMax.addEventListener('click', ()=> el.bet.value = Math.max(1, state.balance||1) );
+
+  el.changeUserBtn.addEventListener('click', ()=> { location.reload(); });
+  el.closeSessionModal.addEventListener('click', ()=> showSessionModal(false));
+  el.exchangeBtn.addEventListener('click', async ()=>{
+    const t = (el.tokenInput.value||'').trim(); if(!t) return; setToast('Обмен токена…');
+    try{ const data = await apiOpenSession(t); state.jwt=data.jwt; state.userId=data.user_id||null; state.tgId=data.tg_id||null; state.username=data.username||null; state.balance=Number(data.balance||0); updateHeader(); updateBalanceUI(); showSessionModal(false); setToast('Готово!'); }
+    catch(e){ el.sessionErr.textContent = e.message || 'Не удалось обменять токен'; }
+  });
+
+  // FLIP
+  el.flipBtn.addEventListener('click', async ()=>{
+    if(state.spinning) return;
+    if(!state.jwt){ showSessionModal(true, 'Эта страница должна открываться из Telegram. Нажмите Play в боте.'); return; }
+    const bet = Math.floor(Number(el.bet.value||0));
+    if(!Number.isFinite(bet) || bet < 1){ return setToast('Ставка должна быть целым числом > 0', true); }
+    if(state.balance && bet > state.balance){ return setToast('Недостаточно средств', true); }
+
+    setToast(''); setSpinning(true);
+    el.coin.classList.remove('flipping'); void el.coin.offsetWidth; el.coin.classList.add('flipping');
+
+    let isWin = false; let newBalance = state.balance;
+    try{
+      const data = await apiSpin(bet);
+      isWin = !!data.is_win;
+      if(typeof data.balance !== 'undefined'){ newBalance = Number(data.balance); state.balance = newBalance; updateBalanceUI(); }
+    }catch(e){
+      setSpinning(false); setResult(e.message || 'Ошибка', 'lose'); setToast(e.message || 'Ошибка', true); return;
+    }
+
+    finalRotate(isWin);
+    setTimeout(async ()=>{
+      setSpinning(false);
+      if(isWin){ setResult('Победа! 🎉', 'win'); launchConfetti(); }
+      else{ setResult('Не повезло. Попробуй ещё!', 'lose'); }
+
+      // Report best score (we use BALANCE as score for MVP)
+      if(rememberBest(newBalance) && !state.postingScore){
+        state.postingScore = true;
+        try{ await apiScore(newBalance); setToast('Рекорд отправлен в таблицу лидеров ✅'); }
+        catch(e){ setToast('Не удалось отправить результат: ' + (e.message||'ошибка'), true); }
+        finally{ state.postingScore = false; }
+      }
+    }, 1220);
+  });
+
+  /* ==== INIT ==== */
+  (async function init(){
+    try{ el.changeUserBtn.textContent = 'Перезагрузить сессию'; }catch{}
+    // session from URL
+    const params = new URLSearchParams(location.search);
+    const t = params.get('t');
+    if(!t){ showSessionModal(true, 'Нет параметра t. Открой игру из Telegram.'); finalRotate(true); return; }
+    try{
+      setToast('Инициализация…');
+      const data = await apiOpenSession(t);
+      state.jwt = data.jwt; state.userId = data.user_id||null; state.tgId = data.tg_id||null; state.username = data.username||null; state.balance = Number(data.balance||0);
+      updateHeader(); updateBalanceUI(); setToast('Готово!'); showSessionModal(false);
+    }catch(e){ showSessionModal(true, e.message || 'Не удалось открыть сессию'); }
+    finalRotate(true);
+  })();
+</script>
 </body>
 </html>

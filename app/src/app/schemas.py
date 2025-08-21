@@ -11,6 +11,7 @@ class SessionOut(BaseModel):
     tg_id: int
     username: Optional[str] = None
     user_id: Optional[int] = None
+    balance: int
     jwt: str
     ctx: dict
 

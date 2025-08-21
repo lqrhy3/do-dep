@@ -40,6 +40,8 @@ services:
       - ./web:/srv:ro
       - caddy_data:/data            # cert storage
       - caddy_config:/config
+    environment:
+      - EMAIL=${ACME_EMAIL}
     depends_on:
       - api
 
