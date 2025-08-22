@@ -159,16 +159,6 @@
   </div>
 
 <script>
-  /* ==== NO-ZOOM FIX (JS) ==== */
-  // Блокируем double-tap zoom
-  let __lastTouchEnd = 0;
-  document.addEventListener('touchend', function (e) {
-    const now = Date.now();
-    if (now - __lastTouchEnd <= 350) {
-      e.preventDefault();
-    }
-    __lastTouchEnd = now;
-  }, { passive: false });
   // Блокируем pinch-zoom на iOS
   document.addEventListener('gesturestart', function(e){ e.preventDefault(); }, { passive: false });
 
