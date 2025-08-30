@@ -1,6 +1,14 @@
+<div align="center">
+       
 # 🪙 Telegram FlipCoin Game
+</div>
+<p align="center">
+<a href="https://t.me/DoDepYopBot?game=flipper" alt="Run Telegram Game shield"><img src="https://img.shields.io/badge/Telegram-26A5E4?style=flat&logo=telegram&logoColor=white" width="230"/></a>
+</p>
 
+## Description
 A simple game on Telegram Gaming Platform where players place bets, flip a coin, and win (or lose 🙃).
+
 
 ## 🎮 Demo
 
