@@ -4,8 +4,9 @@ A simple game on Telegram Gaming Platform where players place bets, flip a coin,
 
 ## 🎮 Demo
 
-<video src="https://github.com/user-attachments/assets/7c53809e-4242-4568-a4de-3de18d7c0f10"
-       width="360" controls muted playsinline></video>
+<p align="center">
+  <video src="[demo.webm](https://github.com/user-attachments/assets/7c53809e-4242-4568-a4de-3de18d7c0f10)" width="360" controls muted playsinline></video>
+</p>
 
 *Watch the game in action!
 
