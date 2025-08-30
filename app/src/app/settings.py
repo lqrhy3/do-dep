@@ -42,9 +42,24 @@ class AppSettings(BaseSettings):
     jackpot_multiplier: float
 
 
+class WorkerSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_file_encoding='utf-8',
+        extra='ignore',
+        env_ignore_empty=True,
+    )
+
+    lock_key: int
+    refill_amount: int
+    tick_seconds: int
+    bucket_hours: int
+
+
 class Settings(BaseModel):
     db: DBSettings = DBSettings()
     app: AppSettings = AppSettings()
+    worker: WorkerSettings = WorkerSettings()
 
 
 settings = Settings()
